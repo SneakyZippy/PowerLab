@@ -93,6 +93,7 @@ object ChargingNotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingContentIntent)
+            .setDeleteIntent(pendingDismissIntent)
             .addAction(R.drawable.ic_notification_bolt, "Tag & Save", pendingContentIntent)
             .addAction(R.drawable.ic_notification_bolt, "Dismiss", pendingDismissIntent)
             .build()

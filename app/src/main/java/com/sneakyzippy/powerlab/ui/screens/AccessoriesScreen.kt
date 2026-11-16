@@ -66,16 +66,17 @@ fun AccessoriesScreen(
         }
     }
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember {
+        mutableIntStateOf(
+            if (liveTelemetry.isCharging || liveTelemetry.isGracePeriodActive) 0 else 2
+        )
+    }
     val tabs = listOf("Live Test", "Catalog & Combos", "History", "Leaderboard")
 
     var showAddBrickDialog by remember { mutableStateOf(false) }
     var showAddCableDialog by remember { mutableStateOf(false) }
     var editingBrick by remember { mutableStateOf<PowerBrick?>(null) }
     var editingCable by remember { mutableStateOf<Cable?>(null) }
-
-    var selectedHudBrickId by remember { mutableStateOf<String?>(null) }
-    var selectedHudCableId by remember { mutableStateOf<String?>(null) }
 
     var selectedSessionForDetail by remember { mutableStateOf<ChargeTestSession?>(null) }
     val detailSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -131,24 +132,13 @@ fun AccessoriesScreen(
             when (selectedTabIndex) {
                 0 -> LiveChargeHudTab(
                     telemetry = liveTelemetry,
-                    powerBricks = powerBricks,
-                    cables = cables,
-                    selectedBrickId = selectedHudBrickId,
-                    selectedCableId = selectedHudCableId,
-                    onSelectBrick = { selectedHudBrickId = it },
-                    onSelectCable = { selectedHudCableId = it },
-                    onAddNewBrick = { showAddBrickDialog = true },
-                    onAddNewCable = { showAddCableDialog = true },
                     onFinalizeGraceNow = onFinalizeGraceNow,
                     onSaveCurrent = {
-                        val chosenBrick = powerBricks.find { it.id == selectedHudBrickId }
-                        val chosenCable = cables.find { it.id == selectedHudCableId }
-
                         val session = ChargeTestSession(
-                            brickId = selectedHudBrickId,
-                            cableId = selectedHudCableId,
-                            brickName = chosenBrick?.name ?: "Unspecified Charger",
-                            cableName = chosenCable?.name ?: "Unspecified Cable",
+                            brickId = null,
+                            cableId = null,
+                            brickName = "Unspecified Charger",
+                            cableName = "Unspecified Cable",
                             startTimeMs = System.currentTimeMillis() - liveTelemetry.sessionDurationMs,
                             endTimeMs = System.currentTimeMillis(),
                             startBatteryLevel = (liveTelemetry.batteryLevelPercent - 5).coerceAtLeast(0),
@@ -230,7 +220,6 @@ fun AccessoriesScreen(
                 onDismiss = { showAddBrickDialog = false },
                 onConfirm = { brick ->
                     onSaveBrick(brick)
-                    selectedHudBrickId = brick.id
                     showAddBrickDialog = false
                 }
             )
@@ -242,7 +231,6 @@ fun AccessoriesScreen(
                 onDismiss = { showAddCableDialog = false },
                 onConfirm = { cable ->
                     onSaveCable(cable)
-                    selectedHudCableId = cable.id
                     showAddCableDialog = false
                 }
             )

@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,10 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Cable
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Thermostat
@@ -33,13 +28,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,9 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sneakyzippy.powerlab.core.model.Cable
 import com.sneakyzippy.powerlab.core.model.LiveChargeTelemetry
-import com.sneakyzippy.powerlab.core.model.PowerBrick
 import com.sneakyzippy.powerlab.ui.theme.AccentBlue
 import com.sneakyzippy.powerlab.ui.theme.CulpritAmber
 import com.sneakyzippy.powerlab.ui.theme.DarkBackground
@@ -60,18 +50,9 @@ import com.sneakyzippy.powerlab.ui.theme.TextPrimary
 import com.sneakyzippy.powerlab.ui.theme.TextSecondary
 import java.util.Locale
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LiveChargeHudTab(
     telemetry: LiveChargeTelemetry,
-    powerBricks: List<PowerBrick>,
-    cables: List<Cable>,
-    selectedBrickId: String?,
-    selectedCableId: String?,
-    onSelectBrick: (String) -> Unit,
-    onSelectCable: (String) -> Unit,
-    onAddNewBrick: () -> Unit,
-    onAddNewCable: () -> Unit,
     onSaveCurrent: () -> Unit,
     onFinalizeGraceNow: () -> Unit = {}
 ) {
@@ -167,108 +148,6 @@ fun LiveChargeHudTab(
                 telemetry = telemetry,
                 gaugeColor = gaugeColor
             )
-        }
-
-        // Test Setup (Charger & Cable) Selector Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Test Setup (Charger & Cable)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Brick row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Charger:", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-                        TextButton(onClick = onAddNewBrick) {
-                            Text("+ Add Brick", color = GreenPrimary, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        powerBricks.forEach { brick ->
-                            val isSelected = selectedBrickId == brick.id
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { onSelectBrick(brick.id) },
-                                label = { Text(brick.name) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (isSelected) Icons.Default.Check else Icons.Default.Power,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GreenPrimary.copy(alpha = 0.2f),
-                                    selectedLabelColor = GreenPrimary
-                                )
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Cable row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Cable:", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-                        TextButton(onClick = onAddNewCable) {
-                            Text("+ Add Cable", color = AccentBlue, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        cables.forEach { cable ->
-                            val isSelected = selectedCableId == cable.id
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { onSelectCable(cable.id) },
-                                label = { Text(cable.name) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (isSelected) Icons.Default.Check else Icons.Default.Cable,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = AccentBlue.copy(alpha = 0.2f),
-                                    selectedLabelColor = AccentBlue
-                                )
-                            )
-                        }
-                    }
-                }
-            }
         }
 
         // 4-Quadrant Metric Cards

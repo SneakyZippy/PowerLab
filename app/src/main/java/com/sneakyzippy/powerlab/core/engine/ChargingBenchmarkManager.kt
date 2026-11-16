@@ -35,6 +35,7 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
 
     private val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val pendingSessionStore = PendingSessionStore(prefs)
     private val repository = AccessoryRepository(BatteryDatabase.getInstance(context).accessoryDao())
 
     private val _liveTelemetry = MutableStateFlow(LiveChargeTelemetry())
@@ -186,6 +187,7 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
             // Restore any ongoing persisted session into memory instead of clearing it,
             // so an unplug event on a cold/restarted process can finalize it properly
             restoreActiveSession()
+            _pendingCompletedSession.value = pendingSessionStore.restore()
             sampleCurrentState()
         }
     }
@@ -305,6 +307,7 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
             if (disconnectDurationMs <= graceMs && wasMeaningfulSession) {
                 // Dismiss pending save prompt since we reconnected within grace
                 _pendingCompletedSession.value = null
+                pendingSessionStore.clear()
                 ChargingNotificationHelper.cancelNotification(context)
                 ChargingNotificationHelper.cancelDisconnectGraceNotification(context)
                 ChargingNotificationHelper.cancelReconnectNotification(context)
@@ -426,17 +429,15 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
             isThrottled = paused.isThrottled
         )
 
-        // Auto-save completed session immediately so long/overnight sessions are safely preserved
-        scope.launch {
-            repository.saveSession(session, paused.samples)
-        }
         clearPersistedActiveSession()
 
         val autoPrompt = shouldPromptForSession(session)
 
-        // Show completed session prompt immediately without making the user wait for grace countdown
+        // Stage for "Tag & Save" only when the session meets the configured thresholds;
+        // nothing is written to History until the user confirms saving.
         if (autoPrompt) {
             _pendingCompletedSession.value = Pair(session, paused.samples)
+            pendingSessionStore.save(session, paused.samples)
             ChargingNotificationHelper.showSessionFinishedNotification(context, session)
         }
 
@@ -511,6 +512,7 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
 
         if (forcePrompt || autoPrompt) {
             _pendingCompletedSession.value = Pair(session, samples)
+            pendingSessionStore.save(session, samples)
             if (!forcePrompt) {
                 ChargingNotificationHelper.showSessionFinishedNotification(context, session)
             }
@@ -540,6 +542,7 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
         _isGracePeriodActive.value = false
         pausedSessionData = null
         _pendingCompletedSession.value = null
+        pendingSessionStore.clear()
         ChargingNotificationHelper.cancelNotification(context)
         ChargingNotificationHelper.cancelDisconnectGraceNotification(context)
         ChargingNotificationHelper.cancelReconnectNotification(context)
@@ -671,17 +674,15 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
             isThrottled = isThrottled
         )
 
-        // Auto-save session immediately to Room database
-        scope.launch {
-            repository.saveSession(session, samplesList.toList())
-        }
         clearPersistedActiveSession()
 
-        // Check if session qualifies for prompt
+        // Stage for "Tag & Save" only when the session qualifies; nothing is saved to Room until confirmed
         val autoPrompt = shouldPromptForSession(session)
 
         if (autoPrompt) {
-            _pendingCompletedSession.value = Pair(session, samplesList.toList())
+            val capturedSamples = samplesList.toList()
+            _pendingCompletedSession.value = Pair(session, capturedSamples)
+            pendingSessionStore.save(session, capturedSamples)
             ChargingNotificationHelper.showSessionFinishedNotification(context, session)
         }
 
@@ -698,6 +699,7 @@ class ChargingBenchmarkManager private constructor(private val context: Context)
 
     fun clearPendingSession() {
         _pendingCompletedSession.value = null
+        pendingSessionStore.clear()
         gracePeriodTimerJob?.cancel()
         gracePeriodTimerJob = null
         _isGracePeriodActive.value = false

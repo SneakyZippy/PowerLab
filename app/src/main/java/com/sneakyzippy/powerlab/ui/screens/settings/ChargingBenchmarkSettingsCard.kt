@@ -94,7 +94,7 @@ fun ChargingBenchmarkSettingsCard(
                         color = TextPrimary
                     )
                     Text(
-                        "Sends a notification to tag charger & cable after at least $minDurationMinutes min and $minBatteryGain% battery gained",
+                        "Prompts to tag & save sessions that last at least $minDurationMinutes min and gain $minBatteryGain% battery",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary
                     )
