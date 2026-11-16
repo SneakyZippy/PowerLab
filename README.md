@@ -26,6 +26,15 @@
 
 ---
 
+## Join Closed Testing (Google Play Beta)
+
+Want early access via Google Play? Join the testers group first, then opt in to the closed test once the Play Store link is live:
+
+1. Join the Google Group: **[powerlab-testers](https://groups.google.com/g/powerlab-testers)** (`powerlab-testers@googlegroups.com`)
+2. Opt in on Google Play using the same Google account.
+
+---
+
 ## Key Features
 
 - **Charging & Hardware Benchmarking**: Real-time charging wattage, net current (mA), voltage, and battery temperature curves. Catalog and compare chargers, USB-C cables, and wireless pads.
